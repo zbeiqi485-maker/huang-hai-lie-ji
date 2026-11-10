@@ -8,7 +8,14 @@ var portrait := false
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_resize_to_viewport()
+	get_viewport().size_changed.connect(_resize_to_viewport)
 	set_process_input(true)
+
+func _resize_to_viewport() -> void:
+	position = Vector2.ZERO
+	size = get_viewport_rect().size
+	queue_redraw()
 
 func _process(dt: float) -> void:
 	orientation_timer -= dt
