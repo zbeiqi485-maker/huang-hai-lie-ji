@@ -54,26 +54,46 @@ func _run() -> void:
 		_fail("Stamina spending incorrect")
 		return
 
+	# A full light combo must advance 1 -> 2 -> 3, spending stamina each step.
+	player._set_state(3)
+	player.queued_combo = true
+	player.timer = 0.39
+	player._physics_process(0.017)
+	if int(player.state) != 4:
+		_fail("Light combo step 1 did not chain into step 2")
+		return
+	player.queued_combo = true
+	player.timer = 0.45
+	player._physics_process(0.017)
+	if int(player.state) != 5:
+		_fail("Light combo step 2 did not chain into step 3")
+		return
+	player.timer = 0.59
+	player._physics_process(0.017)
+	if int(player.state) != 0:
+		_fail("Final light combo did not return to idle")
+		return
+
 	# Two separate screen touch IDs must keep independent held actions.
 	var left_touch := InputEventScreenTouch.new()
 	left_touch.index = 1
 	left_touch.position = Vector2(68, 650)
 	left_touch.pressed = true
-	Input.parse_input_event(left_touch)
+	ui._input(left_touch)
 	var attack_touch := InputEventScreenTouch.new()
 	attack_touch.index = 2
 	attack_touch.position = Vector2(1200, 650)
 	attack_touch.pressed = true
-	Input.parse_input_event(attack_touch)
+	ui._input(attack_touch)
 	await process_frame
-	print("TOUCH DIAG size=", ui.size, " counts=", ui.counts, " fingers=", ui.fingers, " left=", Input.is_action_pressed("move_left"), " attack=", Input.is_action_pressed("attack_light"))
+	print("TOUCH CHECK size=", ui.size, " left=", Input.is_action_pressed("move_left"), " attack=", Input.is_action_pressed("attack_light"))
 	if not Input.is_action_pressed("move_left") or not Input.is_action_pressed("attack_light"):
 		_fail("Multi-touch movement and attack were not held independently")
 		return
 	left_touch.pressed = false
 	attack_touch.pressed = false
-	Input.parse_input_event(left_touch)
-	Input.parse_input_event(attack_touch)
+	ui._input(left_touch)
+	ui._input(attack_touch)
 	await process_frame
 	if Input.is_action_pressed("move_left") or Input.is_action_pressed("attack_light"):
 		_fail("Multi-touch release left a stuck action")
