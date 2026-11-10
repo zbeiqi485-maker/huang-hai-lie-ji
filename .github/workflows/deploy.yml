@@ -37,6 +37,17 @@ jobs:
           path: /usr/local/bin/godot
       - name: Import
         run: godot --headless --path . --import --quit
+      - name: Upload tested Godot project source
+        uses: actions/upload-artifact@v4
+        with:
+          name: dev001-godot-source
+          path: |
+            project.godot
+            export_presets.cfg
+            scenes/
+            scripts/
+            tests/
+            README.md
       - name: Smoke test
         run: godot --headless --path . --script res://tests/smoke_test.gd
       - name: Functional combat and multi-touch tests
