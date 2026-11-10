@@ -52,6 +52,8 @@ jobs:
         run: godot --headless --path . --script res://tests/smoke_test.gd
       - name: Functional combat and multi-touch tests
         run: godot --headless --path . --script res://tests/functional_test.gd
+      - name: Physics hitbox and dodge invulnerability test
+        run: godot --headless --path . --script res://tests/collision_test.gd
       - name: Export Web
         run: |
           mkdir -p build/web
