@@ -35,7 +35,8 @@ func _buttons() -> Dictionary:
 func _find_action(p: Vector2) -> String:
 	var rects := _buttons()
 	for action in rects:
-		if (rects[action] as Rect2).has_point(p):
+		var region: Rect2 = rects[action]
+		if region.has_point(p):
 			return action
 	return ""
 
@@ -99,8 +100,8 @@ func _notification(what: int) -> void:
 
 func _draw() -> void:
 	var scale := minf(size.x / 1280.0, size.y / 720.0)
-	var p := get_parent().get_node("Player")
-	var b := get_parent().get_node("Beast")
+	var p = get_parent().get_node("Player")
+	var b = get_parent().get_node("Beast")
 	var font := ThemeDB.fallback_font
 	var x := 26.0 * scale
 	var y := 32.0 * scale
