@@ -4,7 +4,7 @@ on:
     branches: [main]
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 concurrency:
@@ -12,6 +12,8 @@ concurrency:
   cancel-in-progress: true
 jobs:
   build:
+    outputs:
+      pages_enabled: ${{ steps.pages.outputs.enabled }}
     runs-on: ubuntu-24.04
     timeout-minutes: 35
     steps:
@@ -44,12 +46,51 @@ jobs:
         with:
           name: dev001-web-export
           path: build/web/
+      - name: Publish Web preview (generated branch)
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+        run: |
+          set -euo pipefail
+          REMOTE="https://x-access-token:$GH_TOKEN@github.com/$GITHUB_REPOSITORY.git"
+          if git clone -q --single-branch --branch web-preview "$REMOTE" /tmp/web-preview; then
+            cd /tmp/web-preview
+            find . -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+          else
+            mkdir -p /tmp/web-preview
+            cd /tmp/web-preview
+            git init -q -b web-preview
+            git remote add origin "$REMOTE"
+          fi
+          cp -a "$GITHUB_WORKSPACE/build/web/." .
+          touch .nojekyll
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add -A
+          if ! git diff --cached --quiet; then
+            git commit -q -m "Build: Godot 4.7.2 Web preview"
+            git push -q origin HEAD:refs/heads/web-preview
+          fi
+      - name: Detect whether GitHub Pages is enabled
+        id: pages
+        shell: bash
+        run: |
+          if curl -fsS "https://api.github.com/repos/zbeiqi485-maker/huang-hai-lie-ji/pages" >/dev/null; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "GitHub Pages is not yet enabled; independent Web preview branch has been published."
+          fi
       - uses: actions/configure-pages@v5
+        if: steps.pages.outputs.enabled == 'true'
       - uses: actions/upload-pages-artifact@v3
+        if: steps.pages.outputs.enabled == 'true'
         with:
           path: build/web
   deploy:
     needs: build
+    if: needs.build.outputs.pages_enabled == 'true'
     runs-on: ubuntu-24.04
     environment:
       name: github-pages
