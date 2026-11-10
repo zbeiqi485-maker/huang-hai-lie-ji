@@ -30,6 +30,11 @@ jobs:
           unzip -q /tmp/templates.tpz -d /tmp/godot-export
           cp /tmp/godot-export/templates/* "$HOME/.local/share/godot/export_templates/4.7.2.stable/"
           godot --headless --version
+      - name: Keep Godot editor build for reproducible debugging
+        uses: actions/upload-artifact@v4
+        with:
+          name: godot-4.7.2-linux-editor
+          path: /usr/local/bin/godot
       - name: Import
         run: godot --headless --path . --import --quit
       - name: Smoke test
