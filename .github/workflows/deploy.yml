@@ -1,0 +1,59 @@
+name: Godot 4.7.2 Web Build and Pages
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: huanghai-pages
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Godot 4.7.2 and templates
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 -o /tmp/editor.zip https://github.com/godotengine/godot-builds/releases/download/4.7.2-stable/Godot_v4.7.2-stable_linux.x86_64.zip
+          curl -fL --retry 3 -o /tmp/templates.tpz https://github.com/godotengine/godot-builds/releases/download/4.7.2-stable/Godot_v4.7.2-stable_export_templates.tpz
+          unzip -q /tmp/editor.zip -d /tmp/godot-bin
+          sudo install -m 755 /tmp/godot-bin/Godot_v4.7.2-stable_linux.x86_64 /usr/local/bin/godot
+          mkdir -p "$HOME/.local/share/godot/export_templates/4.7.2.stable" /tmp/godot-export
+          unzip -q /tmp/templates.tpz -d /tmp/godot-export
+          cp /tmp/godot-export/templates/* "$HOME/.local/share/godot/export_templates/4.7.2.stable/"
+          godot --headless --version
+      - name: Import
+        run: godot --headless --path . --import --quit
+      - name: Smoke test
+        run: godot --headless --path . --script res://tests/smoke_test.gd
+      - name: Export Web
+        run: |
+          mkdir -p build/web
+          godot --headless --path . --export-release Web build/web/index.html
+          test -s build/web/index.html
+          test -s build/web/index.wasm
+          test -s build/web/index.pck
+          ls -lh build/web/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dev001-web-export
+          path: build/web/
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/web
+  deploy:
+    needs: build
+    runs-on: ubuntu-24.04
+    environment:
+      name: github-pages
+      url: https://zbeiqi485-maker.github.io/huang-hai-lie-ji/
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
