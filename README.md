@@ -13,3 +13,7 @@ Godot 4.7.2 + GDScript + Compatibility。独立横版训练战斗工程，非正
 **验收**：CI 导出成功不代表 Android 多点触控、帧率及手感已经实机通过；未提供实机证据不得声称最终验收通过。
 
 本仓库与 LAST RAIL、NEON: REQUIEM、《巨兽远征》独立。
+
+## Pages 首次启用后
+
+仓库 Settings → Pages → Build and deployment → Source 设为 GitHub Actions。之后推送 main 会自动构建并部署；首次设置完成后需要重新运行工作流。网页是否上线以 Actions 的 deploy 作业和实际访问为准。
